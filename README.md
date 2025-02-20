@@ -1,5 +1,3 @@
-# Conversational Chatbot Application with LangChain and Streamlit
-
 # RAG-Based AI Application with Deepseek-R1:1.5B
 
 ## 🚀 Overview
