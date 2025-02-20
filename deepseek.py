@@ -6,7 +6,12 @@ from langchain_ollama import OllamaEmbeddings
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_ollama.llms import OllamaLLM
 import os
+import json
+from datetime import datetime
+import speech_recognition as sr  # For voice input and transcription
+import pyttsx3  # For text-to-speech (voice output)
 
+# Custom CSS for styling
 st.markdown("""
     <style>
     .stApp {
@@ -74,24 +79,22 @@ Context: {document_context}
 Answer:
 """
 PDF_STORAGE_PATH = 'document_store/pdfs/'
+FEEDBACK_STORAGE_PATH = 'feedback_store/'
 EMBEDDING_MODEL = OllamaEmbeddings(model="deepseek-r1:1.5b")
 DOCUMENT_VECTOR_DB = InMemoryVectorStore(EMBEDDING_MODEL)
 LANGUAGE_MODEL = OllamaLLM(model="deepseek-r1:1.5b")
 
+# Ensure feedback storage directory exists
+os.makedirs(FEEDBACK_STORAGE_PATH, exist_ok=True)
 
-import os
+# Initialize text-to-speech engine
+engine = pyttsx3.init()
 
 def save_uploaded_file(uploaded_file):
-    # Ensure the directory exists
     os.makedirs(PDF_STORAGE_PATH, exist_ok=True)
-
-    # Define the file path
     file_path = os.path.join(PDF_STORAGE_PATH, uploaded_file.name)
-
-    # Write the file
     with open(file_path, "wb") as file:
         file.write(uploaded_file.getbuffer())
-
     return file_path
 
 def load_pdf_documents(file_path):
@@ -118,10 +121,34 @@ def generate_answer(user_query, context_documents):
     response_chain = conversation_prompt | LANGUAGE_MODEL
     return response_chain.invoke({"user_query": user_query, "document_context": context_text})
 
+def save_feedback(user_query, ai_response, feedback):
+    feedback_data = {
+        "query": user_query,
+        "response": ai_response,
+        "feedback": feedback,
+        "timestamp": datetime.now().isoformat()
+    }
+    feedback_file = os.path.join(FEEDBACK_STORAGE_PATH, f"feedback_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
+    with open(feedback_file, "w") as file:
+        json.dump(feedback_data, file)
+
+def transcribe_audio(audio_file):
+    recognizer = sr.Recognizer()
+    with sr.AudioFile(audio_file) as source:
+        audio = recognizer.record(source)
+    try:
+        text = recognizer.recognize_google(audio)
+        return text
+    except sr.UnknownValueError:
+        return "Could not understand audio"
+    except sr.RequestError:
+        return "Could not request results from Google Speech Recognition"
+
+def text_to_speech(text):
+    engine.say(text)
+    engine.runAndWait()
 
 # UI Configuration
-
-
 st.title("📘 DocuMind AI")
 st.markdown("### Your Intelligent Document Assistant")
 st.markdown("---")
@@ -132,7 +159,6 @@ uploaded_pdf = st.file_uploader(
     type="pdf",
     help="Select a PDF document for analysis",
     accept_multiple_files=False
-
 )
 
 if uploaded_pdf:
@@ -143,7 +169,16 @@ if uploaded_pdf:
     
     st.success("✅ Document processed successfully! Ask your questions below.")
     
-    user_input = st.chat_input("Enter your question about the document...")
+    # Voice Input Section
+    st.markdown("### Voice Input")
+    audio_file = st.file_uploader("Or upload an audio file (WAV format)", type=["wav"])
+    if audio_file:
+        with st.spinner("Transcribing audio..."):
+            transcribed_text = transcribe_audio(audio_file)
+            st.write("Transcribed Text:", transcribed_text)
+            user_input = transcribed_text
+    else:
+        user_input = st.chat_input("Enter your question about the document...")
     
     if user_input:
         with st.chat_message("user"):
@@ -155,3 +190,17 @@ if uploaded_pdf:
             
         with st.chat_message("assistant", avatar="🤖"):
             st.write(ai_response)
+            # Voice Output
+            if st.button("🔊 Play Response"):
+                text_to_speech(ai_response)
+        
+        # Feedback Section
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("👍 Good Response"):
+                save_feedback(user_input, ai_response, "good")
+                st.success("Thank you for your feedback!")
+        with col2:
+            if st.button("👎 Bad Response"):
+                save_feedback(user_input, ai_response, "bad")
+                st.error("Thank you for your feedback!")
