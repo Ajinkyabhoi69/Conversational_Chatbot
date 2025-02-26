@@ -1,15 +1,15 @@
-import streamlit as st
-from langchain_community.document_loaders import PDFPlumberLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_core.vectorstores import InMemoryVectorStore
-from langchain_ollama import OllamaEmbeddings
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_ollama.llms import OllamaLLM
+import streamlit as st 
+from langchain_community.document_loaders import PDFPlumberLoader 
+from langchain_text_splitters import RecursiveCharacterTextSplitter 
+from langchain_core.vectorstores import InMemoryVectorStore 
+from langchain_ollama import OllamaEmbeddings 
+from langchain_core.prompts import ChatPromptTemplate 
+from langchain_ollama.llms import OllamaLLM 
 import os
 import json
 from datetime import datetime
-import speech_recognition as sr  # For voice input and transcription
-import pyttsx3  # For text-to-speech (voice output)
+import speech_recognition as sr  
+import pyttsx3  
 
 # Custom CSS for styling
 st.markdown("""
@@ -149,8 +149,8 @@ def text_to_speech(text):
     engine.runAndWait()
 
 # UI Configuration
-st.title("📘 DocuMind AI")
-st.markdown("### Your Intelligent Document Assistant")
+st.title("📘 SmartDoc AI")
+st.markdown("### Your Intelligent Document & Audio Assistant")
 st.markdown("---")
 
 # File Upload Section
@@ -170,12 +170,12 @@ if uploaded_pdf:
     st.success("✅ Document processed successfully! Ask your questions below.")
     
     # Voice Input Section
-    st.markdown("### Voice Input")
+    st.markdown("")
     audio_file = st.file_uploader("Or upload an audio file (WAV format)", type=["wav"])
     if audio_file:
         with st.spinner("Transcribing audio..."):
             transcribed_text = transcribe_audio(audio_file)
-            st.write("Transcribed Text:", transcribed_text)
+            st.write("User Qestion is:", transcribed_text)
             user_input = transcribed_text
     else:
         user_input = st.chat_input("Enter your question about the document...")
