@@ -1,15 +1,14 @@
-import streamlit as st 
-from langchain_community.document_loaders import PDFPlumberLoader 
-from langchain_text_splitters import RecursiveCharacterTextSplitter 
-from langchain_core.vectorstores import InMemoryVectorStore 
-from langchain_ollama import OllamaEmbeddings 
-from langchain_core.prompts import ChatPromptTemplate 
-from langchain_ollama.llms import OllamaLLM 
+import streamlit as st
+from langchain_community.document_loaders import PDFPlumberLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_core.vectorstores import InMemoryVectorStore
+from langchain_ollama import OllamaEmbeddings
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_ollama.llms import OllamaLLM
 import os
 import json
 from datetime import datetime
-import speech_recognition as sr  
-import pyttsx3  
+import pyttsx3  # For text-to-speech (voice output)
 
 # Custom CSS for styling
 st.markdown("""
@@ -132,25 +131,13 @@ def save_feedback(user_query, ai_response, feedback):
     with open(feedback_file, "w") as file:
         json.dump(feedback_data, file)
 
-def transcribe_audio(audio_file):
-    recognizer = sr.Recognizer()
-    with sr.AudioFile(audio_file) as source:
-        audio = recognizer.record(source)
-    try:
-        text = recognizer.recognize_google(audio)
-        return text
-    except sr.UnknownValueError:
-        return "Could not understand audio"
-    except sr.RequestError:
-        return "Could not request results from Google Speech Recognition"
-
 def text_to_speech(text):
     engine.say(text)
     engine.runAndWait()
 
 # UI Configuration
-st.title("📘 SmartDoc AI")
-st.markdown("### Your Intelligent Document & Audio Assistant")
+st.title("📘 Benz AI Packaging Assistant ")
+st.markdown("### Welcome to BENZ Packaging Solutions ")
 st.markdown("---")
 
 # File Upload Section
@@ -169,16 +156,8 @@ if uploaded_pdf:
     
     st.success("✅ Document processed successfully! Ask your questions below.")
     
-    # Voice Input Section
-    st.markdown("")
-    audio_file = st.file_uploader("Or upload an audio file (WAV format)", type=["wav"])
-    if audio_file:
-        with st.spinner("Transcribing audio..."):
-            transcribed_text = transcribe_audio(audio_file)
-            st.write("User Qestion is:", transcribed_text)
-            user_input = transcribed_text
-    else:
-        user_input = st.chat_input("Enter your question about the document...")
+    # Chat Input Section
+    user_input = st.chat_input("Enter your question about the document...")
     
     if user_input:
         with st.chat_message("user"):
