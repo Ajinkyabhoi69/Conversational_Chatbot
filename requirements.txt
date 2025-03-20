@@ -1,13 +1,10 @@
-streamlit==1.41.1
-langchain-community==0.3.14
-langchain-text-splitters==0.3.4
-langchain-core==0.3.29
+streamlit
+langchain-community
+langchain-text-splitters
+langchain-core
 langchain-ollama
 pdfplumber
-speechrecognition
 pyttsx3
-datetime
-json
-os
+
 
 
